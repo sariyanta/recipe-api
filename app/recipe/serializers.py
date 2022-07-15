@@ -92,3 +92,13 @@ class RecipeDetailSerializer(RecipeSerializer):
         instance.save()
 
         return instance
+
+
+class RecipeImageSerializer(serializers.ModelSerializer):
+    """Serializer for image"""
+
+    class Meta:
+        model = models.Recipe
+        fields = ["id", "image"]
+        read_only_fields = ["id"]
+        extra_kwargs = {"image": {"required": "True"}}

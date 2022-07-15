@@ -408,18 +408,68 @@ class PrivateRecipeTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.ingredients.count(), 0)
 
+    def test_filter_by_tags(self):
+        """Test filtering recipe by tags"""
+        recipe_one = create_recipe(user=self.user, title="Thai Curry")
+        recipe_two = create_recipe(user=self.user, title="Nasi Goreng")
 
-class ImageUploadAPITest(TestCase):
+        tag_one = models.Tag.objects.create(user=self.user, name="Thai")
+        tag_two = models.Tag.objects.create(user=self.user, name="Indonesian")
+
+        recipe_one.tags.add(tag_one)
+        recipe_two.tags.add(tag_two)
+
+        recipe_three = create_recipe(user=self.user, title="Fish and Chips")
+
+        params = {"tags": f"{tag_one.id}, {tag_two.id}"}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(recipe_one)
+        s2 = RecipeSerializer(recipe_two)
+        s3 = RecipeSerializer(recipe_three)
+
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+    def test_filter_by_ingredients(self):
+        """Test filtering recipe by ingredients"""
+        recipe_one = create_recipe(user=self.user, title="Thai Curry")
+        recipe_two = create_recipe(user=self.user, title="Nasi Goreng")
+
+        ing_one = models.Ingredient.objects.create(user=self.user, name="Curry")
+        ing_two = models.Ingredient.objects.create(user=self.user, name="Rice")
+
+        recipe_one.ingredients.add(ing_one)
+        recipe_two.ingredients.add(ing_two)
+
+        recipe_three = create_recipe(user=self.user, title="Fish and Chips")
+
+        params = {"ingredients": f"{ing_one.id}, {ing_two.id}"}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(recipe_one)
+        s2 = RecipeSerializer(recipe_two)
+        s3 = RecipeSerializer(recipe_three)
+
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+
+class ImageUploadAPITests(TestCase):
+    """Tests uploading images."""
+
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            email="user@example.com", password="testpass123"
+            "user@example.com", "testpass123"
         )
         self.client.force_authenticate(self.user)
         self.recipe = create_recipe(user=self.user)
 
     def tearDown(self):
-        return self.recipe.image.delete()
+        self.recipe.image.delete()
 
     def test_upload_image(self):
         """Test uploading an image to a recipe"""
